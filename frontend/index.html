@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Control de Garita</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: #1a1a1a; color: #fff; min-height: 100vh; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* LOGIN */
+  .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .login-card { background: #242424; border: 1px solid #333; border-radius: 14px; padding: 40px; width: 380px; }
+  .login-header { text-align: center; margin-bottom: 28px; }
+  .shield-icon { width: 56px; height: 56px; background: #C62828; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 26px; }
+  .login-header h1 { font-size: 20px; font-weight: 700; }
+  .login-header p  { font-size: 12px; color: #888; margin-top: 5px; text-transform: uppercase; letter-spacing: .08em; }
+  .divider { height: 1px; background: #333; margin: 0 0 24px; }
+  .field { margin-bottom: 16px; }
+  label { display: block; font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 7px; }
+  input, select, textarea { width: 100%; padding: 11px 14px; background: #1a1a1a; border: 1px solid #444; border-radius: 8px; color: #fff; font-family: 'Inter', sans-serif; font-size: 14px; outline: none; transition: border-color .2s; }
+  input:focus, select:focus, textarea:focus { border-color: #C62828; }
+  input::placeholder, textarea::placeholder { color: #555; }
+  select option { background: #242424; }
+  textarea { resize: vertical; min-height: 80px; }
+  .btn-primary { width: 100%; padding: 12px; background: #C62828; color: #fff; border: none; border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: background .2s; }
+  .btn-primary:hover { background: #A32D2D; }
+  .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+  .err-msg { display: none; color: #f87171; font-size: 13px; text-align: center; margin-top: 14px; padding: 10px; background: rgba(198,40,40,.1); border: 1px solid rgba(198,40,40,.3); border-radius: 8px; }
+  .err-msg.show { display: block; }
+  .ok-msg  { display: none; color: #4ade80; font-size: 13px; text-align: center; margin-top: 14px; padding: 10px; background: rgba(74,222,128,.1); border: 1px solid rgba(74,222,128,.3); border-radius: 8px; }
+  .ok-msg.show { display: block; }
+
+  /* TOPBAR */
+  .topbar { background: #242424; border-bottom: 1px solid #333; padding: 13px 28px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .topbar-icon { width: 34px; height: 34px; background: #C62828; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .topbar-title { font-size: 15px; font-weight: 700; }
+  .topbar-sub   { font-size: 11px; color: #666; }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+  .user-chip { background: #2e2e2e; border: 1px solid #444; border-radius: 20px; padding: 5px 14px; font-size: 12px; color: #ccc; }
+  .topbar-clock { font-size: 12px; color: #666; }
+  .btn-salir { background: transparent; border: 1px solid #444; border-radius: 7px; padding: 6px 14px; color: #888; font-size: 12px; cursor: pointer; font-family: 'Inter', sans-serif; transition: border-color .2s, color .2s; }
+  .btn-salir:hover { border-color: #C62828; color: #f87171; }
+
+  /* NAV TABS */
+  .nav-tabs { background: #1e1e1e; border-bottom: 1px solid #2a2a2a; padding: 0 28px; display: flex; gap: 4px; }
+  .nav-tab { padding: 13px 18px; font-size: 13px; font-weight: 500; color: #666; cursor: pointer; border-bottom: 2px solid transparent; transition: color .2s, border-color .2s; background: none; border-top: none; border-left: none; border-right: none; font-family: 'Inter', sans-serif; }
+  .nav-tab:hover { color: #ccc; }
+  .nav-tab.active { color: #fff; border-bottom-color: #C62828; }
+  .badge-tab { background: #C62828; color: #fff; font-size: 10px; font-weight: 700; border-radius: 10px; padding: 1px 6px; margin-left: 6px; }
+
+  /* CONTENIDO */
+  .page { display: none; padding: 28px; max-width: 900px; }
+  .page.active { display: block; }
+
+  /* DASHBOARD */
+  .dash-greeting { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .dash-fecha    { font-size: 12px; color: #666; margin-bottom: 24px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 32px; }
+  .stat-card { background: #242424; border: 1px solid #333; border-radius: 10px; padding: 18px 20px; }
+  .stat-val { font-size: 28px; font-weight: 700; }
+  .stat-lbl { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: .06em; margin-top: 4px; display: flex; align-items: center; gap: 6px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #C62828; }
+  .section-title { font-size: 11px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 14px; }
+  .menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .menu-card { background: #242424; border: 1px solid #333; border-radius: 12px; padding: 22px 18px; cursor: pointer; transition: border-color .2s, background .2s; }
+  .menu-card:hover { border-color: #C62828; background: #2a1a1a; }
+  .menu-icon { width: 44px; height: 44px; background: #2e1a1a; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 12px; }
+  .menu-card:hover .menu-icon { background: #3d1515; }
+  .menu-name { font-size: 14px; font-weight: 600; color: #e0e0e0; }
+  .menu-desc { font-size: 12px; color: #666; margin-top: 3px; }
+
+  /* FORMULARIO REGISTRO */
+  .form-card { background: #242424; border: 1px solid #333; border-radius: 12px; padding: 28px; max-width: 560px; }
+  .form-card h2 { font-size: 16px; font-weight: 600; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid #333; }
+  .tipo-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+  .tipo-btn { padding: 10px; border: 1px solid #444; border-radius: 8px; background: transparent; color: #888; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; }
+  .tipo-btn.entrada.active { background: rgba(74,222,128,.1); border-color: #4ade80; color: #4ade80; }
+  .tipo-btn.salida.active  { background: rgba(248,113,113,.1); border-color: #f87171; color: #f87171; }
+
+  /* TABLA */
+  .tabla-wrap { overflow-x: auto; }
+  .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .toolbar input { width: 200px; }
+  .toolbar input[type="date"] { width: 160px; }
+  .btn-sec { padding: 9px 16px; background: transparent; border: 1px solid #444; border-radius: 8px; color: #aaa; font-family: 'Inter', sans-serif; font-size: 13px; cursor: pointer; transition: border-color .2s, color .2s; white-space: nowrap; }
+  .btn-sec:hover { border-color: #C62828; color: #fff; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid #333; }
+  tbody td { padding: 11px 14px; border-bottom: 1px solid #2a2a2a; color: #ccc; }
+  tbody tr:hover td { background: #242424; }
+  .pill { display: inline-block; font-size: 11px; font-weight: 600; border-radius: 20px; padding: 2px 10px; }
+  .pill.entrada { background: rgba(74,222,128,.1);  color: #4ade80; }
+  .pill.salida  { background: rgba(248,113,113,.1); color: #f87171; }
+  .empty-state { text-align: center; padding: 48px 0; color: #555; font-size: 14px; }
+  .loading { text-align: center; padding: 32px 0; color: #555; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="screen active" id="s-login">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="shield-icon">🛡</div>
+        <h1>Control de Garita</h1>
+        <p>Sistema de acceso vehicular</p>
+      </div>
+      <div class="divider"></div>
+      <div class="field"><label>Usuario</label><input id="l-user" type="text" placeholder="Ej: DALVIZURESO" autocomplete="username"/></div>
+      <div class="field"><label>Contraseña</label><input id="l-pass" type="password" placeholder="••••" autocomplete="current-password"/></div>
+      <button class="btn-primary" id="l-btn" onclick="doLogin()">Ingresar al sistema</button>
+      <div class="err-msg" id="l-err"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SISTEMA -->
+<div class="screen" id="s-sistema">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-icon">🛡</div>
+      <div>
+        <div class="topbar-title">Control de Garita</div>
+        <div class="topbar-sub">Sistema de acceso vehicular</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-clock" id="reloj"></span>
+      <div class="user-chip" id="user-chip">👤</div>
+      <button class="btn-salir" onclick="doLogout()">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="irA('inicio')">🏠 Inicio</button>
+    <button class="nav-tab"        onclick="irA('registrar')">🚗 Registrar placa</button>
+    <button class="nav-tab"        onclick="irA('solicitudes')" id="tab-sol">📋 Solicitudes <span class="badge-tab" id="badge-num">0</span></button>
+    <button class="nav-tab"        onclick="irA('reportes')">📊 Reportes</button>
+  </div>
+
+  <!-- INICIO -->
+  <div class="page active" id="p-inicio">
+    <div class="dash-greeting" id="d-greeting">Bienvenido</div>
+    <div class="dash-fecha" id="d-fecha"></div>
+    <div class="stats">
+      <div class="stat-card"><div class="stat-val" id="s-entradas">—</div><div class="stat-lbl"><span class="dot"></span>Entradas hoy</div></div>
+      <div class="stat-card"><div class="stat-val" id="s-total">—</div><div class="stat-lbl"><span class="dot"></span>Registros totales hoy</div></div>
+      <div class="stat-card"><div class="stat-val" id="s-salidas">—</div><div class="stat-lbl"><span class="dot"></span>Salidas hoy</div></div>
+    </div>
+    <div class="section-title">Acceso rápido</div>
+    <div class="menu-grid">
+      <div class="menu-card" onclick="irA('registrar')">
+        <div class="menu-icon">🚗</div>
+        <div class="menu-name">Registrar placa</div>
+        <div class="menu-desc">Registrar entrada o salida</div>
+      </div>
+      <div class="menu-card" onclick="irA('solicitudes')">
+        <div class="menu-icon">📋</div>
+        <div class="menu-name">Ver solicitudes</div>
+        <div class="menu-desc">Historial del día</div>
+      </div>
+      <div class="menu-card" onclick="irA('reportes')">
+        <div class="menu-icon">📊</div>
+        <div class="menu-name">Reportes</div>
+        <div class="menu-desc">Historial completo</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REGISTRAR PLACA -->
+  <div class="page" id="p-registrar">
+    <div class="form-card">
+      <h2>🚗 Registrar vehículo</h2>
+      <div class="field">
+        <label>Tipo de movimiento</label>
+        <div class="tipo-toggle">
+          <button class="tipo-btn entrada active" id="btn-entrada" onclick="setTipo('entrada')">↓ Entrada</button>
+          <button class="tipo-btn salida"         id="btn-salida"  onclick="setTipo('salida')">↑ Salida</button>
+        </div>
+      </div>
+      <div class="field"><label>Número de placa</label><input id="r-placa" type="text" placeholder="Ej: P-123ABC" style="text-transform:uppercase"/></div>
+      <div class="field"><label>Nombre del conductor</label><input id="r-conductor" type="text" placeholder="Nombre completo"/></div>
+      <div class="field"><label>Motivo de visita</label><textarea id="r-motivo" placeholder="Describe el motivo de la visita..."></textarea></div>
+      <button class="btn-primary" id="r-btn" onclick="doRegistrar()">Guardar registro</button>
+      <div class="err-msg" id="r-err"></div>
+      <div class="ok-msg"  id="r-ok"></div>
+    </div>
+  </div>
+
+  <!-- SOLICITUDES -->
+  <div class="page" id="p-solicitudes">
+    <div class="toolbar">
+      <input type="date" id="sol-fecha" onchange="cargarTabla('solicitudes')"/>
+      <input type="text" id="sol-buscar" placeholder="Buscar placa o conductor..." oninput="filtrarTabla()" style="width:220px"/>
+      <button class="btn-sec" onclick="cargarTabla('solicitudes')">↻ Actualizar</button>
+    </div>
+    <div class="tabla-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Hora</th><th>Placa</th><th>Tipo</th><th>Conductor</th><th>Motivo</th><th>Usuario</th></tr></thead>
+        <tbody id="tabla-sol-body"></tbody>
+      </table>
+      <div class="loading" id="sol-loading">Cargando...</div>
+      <div class="empty-state" id="sol-empty" style="display:none">No hay registros para esta fecha.</div>
+    </div>
+  </div>
+
+  <!-- REPORTES -->
+  <div class="page" id="p-reportes">
+    <div class="toolbar">
+      <input type="date" id="rep-fecha-ini" placeholder="Desde"/>
+      <input type="date" id="rep-fecha-fin" placeholder="Hasta"/>
+      <button class="btn-sec" onclick="cargarTabla('reportes')">↻ Buscar</button>
+      <button class="btn-sec" onclick="exportarCSV()">⬇ Exportar CSV</button>
+    </div>
+    <div class="tabla-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Fecha y hora</th><th>Placa</th><th>Tipo</th><th>Conductor</th><th>Motivo</th><th>Registrado por</th></tr></thead>
+        <tbody id="tabla-rep-body"></tbody>
+      </table>
+      <div class="loading" id="rep-loading">Cargando...</div>
+      <div class="empty-state" id="rep-empty" style="display:none">No hay registros en este rango.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const API = 'http://localhost:8000';
+  let TOKEN = '';
+  let TIPO_SELECCIONADO = 'entrada';
+  let REGISTROS_CACHE = [];
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.getElementById('s-login').classList.contains('active')) doLogin();
+  });
+
+  // ── AUTH ──
+  async function doLogin() {
+    const user = document.getElementById('l-user').value.trim();
+    const pass = document.getElementById('l-pass').value;
+    const btn  = document.getElementById('l-btn');
+    const err  = document.getElementById('l-err');
+    if (!user || !pass) { mostrarErr('l-err', 'Completa todos los campos'); return; }
+    btn.disabled = true; btn.textContent = 'Verificando…'; err.classList.remove('show');
+    try {
+      const res  = await fetch(`${API}/auth/login`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username:user, password:pass}) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Error al iniciar sesión');
+      TOKEN = data.access_token;
+      iniciarSistema(data.username);
+    } catch(e) { mostrarErr('l-err', e.message); }
+    finally { btn.disabled = false; btn.textContent = 'Ingresar al sistema'; }
+  }
+
+  function iniciarSistema(username) {
+    document.getElementById('s-login').classList.remove('active');
+    document.getElementById('s-sistema').classList.add('active');
+    document.getElementById('user-chip').textContent = '👤 ' + username;
+    document.getElementById('d-greeting').textContent = 'Bienvenido, ' + username;
+    document.getElementById('d-fecha').textContent = new Date().toLocaleDateString('es-GT', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    tickReloj();
+    setInterval(tickReloj, 1000);
+    cargarStats();
+    setInterval(cargarStats, 30000);
+    const hoy = new Date().toISOString().slice(0,10);
+    document.getElementById('sol-fecha').value = hoy;
+  }
+
+  function doLogout() {
+    TOKEN = '';
+    document.getElementById('s-sistema').classList.remove('active');
+    document.getElementById('s-login').classList.add('active');
+    document.getElementById('l-user').value = '';
+    document.getElementById('l-pass').value = '';
+  }
+
+  // ── NAVEGACIÓN ──
+  function irA(pagina) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    const mapa = { inicio:'p-inicio', registrar:'p-registrar', solicitudes:'p-solicitudes', reportes:'p-reportes' };
+    document.getElementById(mapa[pagina]).classList.add('active');
+    document.querySelectorAll('.nav-tab')[['inicio','registrar','solicitudes','reportes'].indexOf(pagina)].classList.add('active');
+    if (pagina === 'solicitudes') cargarTabla('solicitudes');
+    if (pagina === 'reportes')    cargarTabla('reportes');
+    if (pagina === 'registrar')   limpiarFormulario();
+  }
+
+  // ── STATS ──
+  async function cargarStats() {
+    try {
+      const res  = await fetch(`${API}/registros/stats?token=${TOKEN}`);
+      const data = await res.json();
+      document.getElementById('s-entradas').textContent = data.entradas;
+      document.getElementById('s-salidas').textContent  = data.salidas;
+      document.getElementById('s-total').textContent    = data.total;
+      document.getElementById('badge-num').textContent  = data.total;
+    } catch(e) {}
+  }
+
+  // ── REGISTRAR ──
+  function setTipo(tipo) {
+    TIPO_SELECCIONADO = tipo;
+    document.getElementById('btn-entrada').classList.toggle('active', tipo === 'entrada');
+    document.getElementById('btn-salida').classList.toggle('active',  tipo === 'salida');
+  }
+
+  async function doRegistrar() {
+    const placa     = document.getElementById('r-placa').value.trim().toUpperCase();
+    const conductor = document.getElementById('r-conductor').value.trim();
+    const motivo    = document.getElementById('r-motivo').value.trim();
+    const btn       = document.getElementById('r-btn');
+    document.getElementById('r-err').classList.remove('show');
+    document.getElementById('r-ok').classList.remove('show');
+    if (!placa || !conductor || !motivo) { mostrarErr('r-err', 'Completa todos los campos'); return; }
+    btn.disabled = true; btn.textContent = 'Guardando…';
+    try {
+      const res  = await fetch(`${API}/registros`, { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ placa, tipo: TIPO_SELECCIONADO, conductor, motivo, token: TOKEN }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Error al guardar');
+      document.getElementById('r-ok').textContent = '✓  Registro guardado exitosamente';
+      document.getElementById('r-ok').classList.add('show');
+      limpiarFormulario();
+      cargarStats();
+    } catch(e) { mostrarErr('r-err', e.message); }
+    finally { btn.disabled = false; btn.textContent = 'Guardar registro'; }
+  }
+
+  function limpiarFormulario() {
+    document.getElementById('r-placa').value     = '';
+    document.getElementById('r-conductor').value = '';
+    document.getElementById('r-motivo').value    = '';
+    setTipo('entrada');
+  }
+
+  // ── TABLAS ──
+  async function cargarTabla(cual) {
+    const isRep = cual === 'reportes';
+    const loadId  = isRep ? 'rep-loading' : 'sol-loading';
+    const emptyId = isRep ? 'rep-empty'   : 'sol-empty';
+    const bodyId  = isRep ? 'tabla-rep-body' : 'tabla-sol-body';
+
+    document.getElementById(loadId).style.display  = 'block';
+    document.getElementById(emptyId).style.display = 'none';
+    document.getElementById(bodyId).innerHTML = '';
+
+    try {
+      let url = `${API}/registros?token=${TOKEN}`;
+      if (!isRep) {
+        const f = document.getElementById('sol-fecha').value;
+        if (f) url += `&fecha=${f}`;
+      }
+      const res  = await fetch(url);
+      const data = await res.json();
+      REGISTROS_CACHE = data;
+      renderTabla(cual, data);
+    } catch(e) {
+      document.getElementById(loadId).style.display = 'none';
+    }
+  }
+
+  function renderTabla(cual, rows) {
+    const isRep  = cual === 'reportes';
+    const loadId  = isRep ? 'rep-loading'    : 'sol-loading';
+    const emptyId = isRep ? 'rep-empty'      : 'sol-empty';
+    const bodyId  = isRep ? 'tabla-rep-body' : 'tabla-sol-body';
+
+    document.getElementById(loadId).style.display = 'none';
+
+    if (!rows.length) {
+      document.getElementById(emptyId).style.display = 'block';
+      return;
+    }
+
+    document.getElementById(bodyId).innerHTML = rows.map((r, i) => `
+      <tr>
+        <td style="color:#555">${r.id}</td>
+        <td>${r.fecha}</td>
+        <td style="font-weight:600;color:#fff">${r.placa}</td>
+        <td><span class="pill ${r.tipo}">${r.tipo}</span></td>
+        <td>${r.conductor}</td>
+        <td style="color:#888;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.motivo}</td>
+        <td style="color:#666">${r.usuario}</td>
+      </tr>`).join('');
+  }
+
+  function filtrarTabla() {
+    const q = document.getElementById('sol-buscar').value.toLowerCase();
+    const filtrado = REGISTROS_CACHE.filter(r =>
+      r.placa.toLowerCase().includes(q) || r.conductor.toLowerCase().includes(q)
+    );
+    renderTabla('solicitudes', filtrado);
+  }
+
+  function exportarCSV() {
+    if (!REGISTROS_CACHE.length) { alert('No hay datos para exportar.'); return; }
+    const cab  = 'ID,Fecha,Placa,Tipo,Conductor,Motivo,Usuario\n';
+    const filas = REGISTROS_CACHE.map(r =>
+      `${r.id},"${r.fecha}","${r.placa}","${r.tipo}","${r.conductor}","${r.motivo}","${r.usuario}"`
+    ).join('\n');
+    const blob = new Blob([cab + filas], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = `garita_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+  }
+
+  function mostrarErr(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = '✕  ' + msg;
+    el.classList.add('show');
+  }
+
+  function tickReloj() {
+    document.getElementById('reloj').textContent =
+      new Date().toLocaleTimeString('es-GT', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  }
+</script>
+</body>
+</html>

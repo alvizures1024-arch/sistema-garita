@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Control de Garita</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Inter', sans-serif; background: #1a1a1a; color: #fff; min-height: 100vh; }
@@ -26,6 +28,7 @@
   input::placeholder, textarea::placeholder { color: #555; }
   select option { background: #242424; }
   textarea { resize: vertical; min-height: 80px; }
+
   .btn-primary { width: 100%; padding: 12px; background: #C62828; color: #fff; border: none; border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: background .2s; }
   .btn-primary:hover { background: #A32D2D; }
   .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
@@ -46,15 +49,15 @@
   .btn-salir { background: transparent; border: 1px solid #444; border-radius: 7px; padding: 6px 14px; color: #888; font-size: 12px; cursor: pointer; font-family: 'Inter', sans-serif; transition: border-color .2s, color .2s; }
   .btn-salir:hover { border-color: #C62828; color: #f87171; }
 
-  /* NAV TABS */
-  .nav-tabs { background: #1e1e1e; border-bottom: 1px solid #2a2a2a; padding: 0 28px; display: flex; gap: 4px; }
-  .nav-tab { padding: 13px 18px; font-size: 13px; font-weight: 500; color: #666; cursor: pointer; border-bottom: 2px solid transparent; transition: color .2s, border-color .2s; background: none; border-top: none; border-left: none; border-right: none; font-family: 'Inter', sans-serif; }
+  /* NAV */
+  .nav-tabs { background: #1e1e1e; border-bottom: 1px solid #2a2a2a; padding: 0 28px; display: flex; gap: 4px; overflow-x: auto; }
+  .nav-tab { padding: 13px 16px; font-size: 13px; font-weight: 500; color: #666; cursor: pointer; border-bottom: 2px solid transparent; transition: color .2s, border-color .2s; background: none; border-top: none; border-left: none; border-right: none; font-family: 'Inter', sans-serif; white-space: nowrap; }
   .nav-tab:hover { color: #ccc; }
   .nav-tab.active { color: #fff; border-bottom-color: #C62828; }
   .badge-tab { background: #C62828; color: #fff; font-size: 10px; font-weight: 700; border-radius: 10px; padding: 1px 6px; margin-left: 6px; }
 
-  /* CONTENIDO */
-  .page { display: none; padding: 28px; max-width: 900px; }
+  /* PÁGINAS */
+  .page { display: none; padding: 28px; max-width: 960px; }
   .page.active { display: block; }
 
   /* DASHBOARD */
@@ -66,7 +69,7 @@
   .stat-lbl { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: .06em; margin-top: 4px; display: flex; align-items: center; gap: 6px; }
   .dot { width: 7px; height: 7px; border-radius: 50%; background: #C62828; }
   .section-title { font-size: 11px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 14px; }
-  .menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .menu-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
   .menu-card { background: #242424; border: 1px solid #333; border-radius: 12px; padding: 22px 18px; cursor: pointer; transition: border-color .2s, background .2s; }
   .menu-card:hover { border-color: #C62828; background: #2a1a1a; }
   .menu-icon { width: 44px; height: 44px; background: #2e1a1a; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 12px; }
@@ -74,30 +77,59 @@
   .menu-name { font-size: 14px; font-weight: 600; color: #e0e0e0; }
   .menu-desc { font-size: 12px; color: #666; margin-top: 3px; }
 
-  /* FORMULARIO REGISTRO */
-  .form-card { background: #242424; border: 1px solid #333; border-radius: 12px; padding: 28px; max-width: 560px; }
+  /* FORM REGISTRO */
+  .form-card { background: #242424; border: 1px solid #333; border-radius: 12px; padding: 28px; max-width: 580px; }
   .form-card h2 { font-size: 16px; font-weight: 600; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid #333; }
   .tipo-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
   .tipo-btn { padding: 10px; border: 1px solid #444; border-radius: 8px; background: transparent; color: #888; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; }
   .tipo-btn.entrada.active { background: rgba(74,222,128,.1); border-color: #4ade80; color: #4ade80; }
   .tipo-btn.salida.active  { background: rgba(248,113,113,.1); border-color: #f87171; color: #f87171; }
 
+  /* QR */
+  .qr-btn { width: 100%; padding: 10px; background: #1a1a2e; border: 1px dashed #534AB7; border-radius: 8px; color: #a78bfa; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 16px; transition: background .2s; }
+  .qr-btn:hover { background: #22223a; }
+  #qr-reader { border-radius: 10px; overflow: hidden; margin-bottom: 16px; display: none; }
+  #qr-reader video { border-radius: 10px; }
+
   /* TABLA */
   .tabla-wrap { overflow-x: auto; }
-  .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-  .toolbar input { width: 200px; }
-  .toolbar input[type="date"] { width: 160px; }
-  .btn-sec { padding: 9px 16px; background: transparent; border: 1px solid #444; border-radius: 8px; color: #aaa; font-family: 'Inter', sans-serif; font-size: 13px; cursor: pointer; transition: border-color .2s, color .2s; white-space: nowrap; }
+  .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .toolbar input { width: auto; flex: 1; min-width: 140px; }
+  .toolbar input[type="date"] { width: 160px; flex: none; }
+  .btn-sec { padding: 9px 14px; background: transparent; border: 1px solid #444; border-radius: 8px; color: #aaa; font-family: 'Inter', sans-serif; font-size: 13px; cursor: pointer; transition: border-color .2s, color .2s; white-space: nowrap; }
   .btn-sec:hover { border-color: #C62828; color: #fff; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  thead th { text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid #333; }
-  tbody td { padding: 11px 14px; border-bottom: 1px solid #2a2a2a; color: #ccc; }
+  thead th { text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid #333; }
+  tbody td { padding: 10px 12px; border-bottom: 1px solid #2a2a2a; color: #ccc; }
   tbody tr:hover td { background: #242424; }
   .pill { display: inline-block; font-size: 11px; font-weight: 600; border-radius: 20px; padding: 2px 10px; }
   .pill.entrada { background: rgba(74,222,128,.1);  color: #4ade80; }
   .pill.salida  { background: rgba(248,113,113,.1); color: #f87171; }
   .empty-state { text-align: center; padding: 48px 0; color: #555; font-size: 14px; }
   .loading { text-align: center; padding: 32px 0; color: #555; font-size: 13px; }
+
+  /* BOTONES ACCIÓN TABLA */
+  .btn-edit { padding: 5px 10px; background: transparent; border: 1px solid #444; border-radius: 6px; color: #aaa; font-size: 12px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all .2s; margin-right: 4px; }
+  .btn-edit:hover { border-color: #a78bfa; color: #a78bfa; }
+  .btn-del  { padding: 5px 10px; background: transparent; border: 1px solid #444; border-radius: 6px; color: #aaa; font-size: 12px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all .2s; }
+  .btn-del:hover  { border-color: #f87171; color: #f87171; }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: #242424; border: 1px solid #333; border-radius: 14px; padding: 28px; width: 480px; max-width: 95vw; }
+  .modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid #333; }
+  .modal-footer { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+  .btn-cancel { padding: 10px 20px; background: transparent; border: 1px solid #444; border-radius: 8px; color: #888; font-family: 'Inter', sans-serif; font-size: 13px; cursor: pointer; }
+  .btn-cancel:hover { border-color: #666; color: #ccc; }
+  .btn-save { padding: 10px 20px; background: #C62828; border: none; border-radius: 8px; color: #fff; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-save:hover { background: #A32D2D; }
+
+  /* CONFIRM MODAL */
+  .confirm-text { font-size: 14px; color: #ccc; margin-bottom: 8px; }
+  .confirm-sub  { font-size: 12px; color: #666; }
+  .btn-del-confirm { padding: 10px 20px; background: #C62828; border: none; border-radius: 8px; color: #fff; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-del-confirm:hover { background: #A32D2D; }
 </style>
 </head>
 <body>
@@ -139,10 +171,12 @@
   </div>
 
   <div class="nav-tabs">
-    <button class="nav-tab active" onclick="irA('inicio')">🏠 Inicio</button>
-    <button class="nav-tab"        onclick="irA('registrar')">🚗 Registrar placa</button>
-    <button class="nav-tab"        onclick="irA('solicitudes')" id="tab-sol">📋 Solicitudes <span class="badge-tab" id="badge-num">0</span></button>
-    <button class="nav-tab"        onclick="irA('reportes')">📊 Reportes</button>
+    <button class="nav-tab active"  onclick="irA('inicio')">🏠 Inicio</button>
+    <button class="nav-tab"         onclick="irA('registrar')">🚗 Registrar</button>
+    <button class="nav-tab"         onclick="irA('solicitudes')" id="tab-sol">📋 Solicitudes <span class="badge-tab" id="badge-num">0</span></button>
+    <button class="nav-tab"         onclick="irA('reportes')">📊 Reportes</button>
+    <button class="nav-tab"         onclick="irA('administrar')">⚙️ Administrar</button>
+    <button class="nav-tab"         onclick="irA('qr')">🔳 Generar QR</button>
   </div>
 
   <!-- INICIO -->
@@ -151,33 +185,29 @@
     <div class="dash-fecha" id="d-fecha"></div>
     <div class="stats">
       <div class="stat-card"><div class="stat-val" id="s-entradas">—</div><div class="stat-lbl"><span class="dot"></span>Entradas hoy</div></div>
-      <div class="stat-card"><div class="stat-val" id="s-total">—</div><div class="stat-lbl"><span class="dot"></span>Registros totales hoy</div></div>
+      <div class="stat-card"><div class="stat-val" id="s-total">—</div><div class="stat-lbl"><span class="dot"></span>Total hoy</div></div>
       <div class="stat-card"><div class="stat-val" id="s-salidas">—</div><div class="stat-lbl"><span class="dot"></span>Salidas hoy</div></div>
     </div>
     <div class="section-title">Acceso rápido</div>
     <div class="menu-grid">
-      <div class="menu-card" onclick="irA('registrar')">
-        <div class="menu-icon">🚗</div>
-        <div class="menu-name">Registrar placa</div>
-        <div class="menu-desc">Registrar entrada o salida</div>
-      </div>
-      <div class="menu-card" onclick="irA('solicitudes')">
-        <div class="menu-icon">📋</div>
-        <div class="menu-name">Ver solicitudes</div>
-        <div class="menu-desc">Historial del día</div>
-      </div>
-      <div class="menu-card" onclick="irA('reportes')">
-        <div class="menu-icon">📊</div>
-        <div class="menu-name">Reportes</div>
-        <div class="menu-desc">Historial completo</div>
-      </div>
+      <div class="menu-card" onclick="irA('registrar')"><div class="menu-icon">🚗</div><div class="menu-name">Registrar</div><div class="menu-desc">Entrada o salida</div></div>
+      <div class="menu-card" onclick="irA('solicitudes')"><div class="menu-icon">📋</div><div class="menu-name">Solicitudes</div><div class="menu-desc">Historial del día</div></div>
+      <div class="menu-card" onclick="irA('reportes')"><div class="menu-icon">📊</div><div class="menu-name">Reportes</div><div class="menu-desc">Historial completo</div></div>
+      <div class="menu-card" onclick="irA('administrar')"><div class="menu-icon">⚙️</div><div class="menu-name">Administrar</div><div class="menu-desc">Editar y eliminar</div></div>
+      <div class="menu-card" onclick="irA('qr')"><div class="menu-icon">🔳</div><div class="menu-name">Generar QR</div><div class="menu-desc">Crear QR para vehículo</div></div>
     </div>
   </div>
 
-  <!-- REGISTRAR PLACA -->
+  <!-- REGISTRAR -->
   <div class="page" id="p-registrar">
     <div class="form-card">
       <h2>🚗 Registrar vehículo</h2>
+
+      <!-- Botón QR -->
+      <button class="qr-btn" id="qr-toggle-btn" onclick="toggleQR()">📷 Escanear QR para autocompletar</button>
+      <div id="qr-reader"></div>
+      <div id="qr-resultado" style="display:none; margin-bottom:12px; padding:10px 14px; background:#1a1a2e; border:1px solid #534AB7; border-radius:8px; font-size:12px; color:#a78bfa;"></div>
+
       <div class="field">
         <label>Tipo de movimiento</label>
         <div class="tipo-toggle">
@@ -198,7 +228,7 @@
   <div class="page" id="p-solicitudes">
     <div class="toolbar">
       <input type="date" id="sol-fecha" onchange="cargarTabla('solicitudes')"/>
-      <input type="text" id="sol-buscar" placeholder="Buscar placa o conductor..." oninput="filtrarTabla()" style="width:220px"/>
+      <input type="text" id="sol-buscar" placeholder="Buscar placa o conductor..." oninput="filtrarTabla()"/>
       <button class="btn-sec" onclick="cargarTabla('solicitudes')">↻ Actualizar</button>
     </div>
     <div class="tabla-wrap">
@@ -206,16 +236,16 @@
         <thead><tr><th>#</th><th>Hora</th><th>Placa</th><th>Tipo</th><th>Conductor</th><th>Motivo</th><th>Usuario</th></tr></thead>
         <tbody id="tabla-sol-body"></tbody>
       </table>
-      <div class="loading" id="sol-loading">Cargando...</div>
-      <div class="empty-state" id="sol-empty" style="display:none">No hay registros para esta fecha.</div>
+      <div class="loading"     id="sol-loading">Cargando...</div>
+      <div class="empty-state" id="sol-empty"   style="display:none">No hay registros para esta fecha.</div>
     </div>
   </div>
 
   <!-- REPORTES -->
   <div class="page" id="p-reportes">
     <div class="toolbar">
-      <input type="date" id="rep-fecha-ini" placeholder="Desde"/>
-      <input type="date" id="rep-fecha-fin" placeholder="Hasta"/>
+      <input type="date" id="rep-fecha-ini"/>
+      <input type="date" id="rep-fecha-fin"/>
       <button class="btn-sec" onclick="cargarTabla('reportes')">↻ Buscar</button>
       <button class="btn-sec" onclick="exportarCSV()">⬇ Exportar CSV</button>
     </div>
@@ -224,11 +254,89 @@
         <thead><tr><th>#</th><th>Fecha y hora</th><th>Placa</th><th>Tipo</th><th>Conductor</th><th>Motivo</th><th>Registrado por</th></tr></thead>
         <tbody id="tabla-rep-body"></tbody>
       </table>
-      <div class="loading" id="rep-loading">Cargando...</div>
-      <div class="empty-state" id="rep-empty" style="display:none">No hay registros en este rango.</div>
+      <div class="loading"     id="rep-loading">Cargando...</div>
+      <div class="empty-state" id="rep-empty"   style="display:none">No hay registros en este rango.</div>
     </div>
   </div>
 
+  <!-- ADMINISTRAR -->
+  <div class="page" id="p-administrar">
+    <div class="toolbar">
+      <input type="date" id="adm-fecha"/>
+      <input type="text" id="adm-buscar" placeholder="Buscar placa o conductor..." oninput="filtrarAdmin()"/>
+      <button class="btn-sec" onclick="cargarAdmin()">↻ Actualizar</button>
+    </div>
+    <div class="tabla-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Fecha</th><th>Placa</th><th>Tipo</th><th>Conductor</th><th>Motivo</th><th>Acciones</th></tr></thead>
+        <tbody id="tabla-adm-body"></tbody>
+      </table>
+      <div class="loading"     id="adm-loading">Cargando...</div>
+      <div class="empty-state" id="adm-empty"   style="display:none">No hay registros.</div>
+    </div>
+  </div>
+
+  <!-- GENERAR QR -->
+<div class="page" id="p-qr">
+  <div class="form-card" style="max-width:500px">
+    <h2>🔳 Generar código QR</h2>
+    <p style="font-size:13px;color:#888;margin-bottom:20px">Ingresa los datos del vehículo y genera un QR. Al escanearlo en "Registrar", llenará el formulario automáticamente.</p>
+    <div class="field"><label>Número de placa</label><input id="qg-placa" type="text" placeholder="Ej: P-123ABC" style="text-transform:uppercase" oninput="actualizarQR()"/></div>
+    <div class="field"><label>Nombre del conductor</label><input id="qg-conductor" type="text" placeholder="Nombre completo" oninput="actualizarQR()"/></div>
+    <div class="field"><label>Motivo de visita</label><input id="qg-motivo" type="text" placeholder="Ej: Entrega de insumos" oninput="actualizarQR()"/></div>
+
+    <div id="qg-preview" style="display:none; text-align:center; margin-top:24px;">
+      <div id="qg-canvas" style="display:inline-block; padding:16px; background:#fff; border-radius:12px;"></div>
+      <p style="font-size:12px;color:#888;margin-top:12px;" id="qg-texto"></p>
+      <div style="margin-top:16px;display:flex;gap:10px;justify-content:center;">
+        <button class="btn-sec" onclick="descargarQR()">⬇ Descargar QR</button>
+        <button class="btn-sec" onclick="imprimirQR()">🖨️ Imprimir</button>
+      </div>
+    </div>
+
+    <div id="qg-empty" style="text-align:center;padding:32px 0;color:#555;font-size:13px;">
+      Ingresa al menos la placa para generar el QR
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- MODAL EDITAR -->
+<div class="modal-overlay" id="modal-editar">
+  <div class="modal">
+    <h3>✏️ Editar registro</h3>
+    <input type="hidden" id="edit-id"/>
+    <div class="field">
+      <label>Tipo</label>
+      <select id="edit-tipo">
+        <option value="entrada">Entrada</option>
+        <option value="salida">Salida</option>
+      </select>
+    </div>
+    <div class="field"><label>Placa</label><input id="edit-placa" type="text" style="text-transform:uppercase"/></div>
+    <div class="field"><label>Conductor</label><input id="edit-conductor" type="text"/></div>
+    <div class="field"><label>Motivo</label><textarea id="edit-motivo"></textarea></div>
+    <div class="err-msg" id="edit-err"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="cerrarModal('modal-editar')">Cancelar</button>
+      <button class="btn-save"   onclick="guardarEdicion()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMAR ELIMINAR -->
+<div class="modal-overlay" id="modal-eliminar">
+  <div class="modal">
+    <h3>🗑️ Eliminar registro</h3>
+    <input type="hidden" id="del-id"/>
+    <p class="confirm-text">¿Estás seguro de que deseas eliminar este registro?</p>
+    <p class="confirm-sub"  id="del-info"></p>
+    <div class="modal-footer">
+      <button class="btn-cancel"      onclick="cerrarModal('modal-eliminar')">Cancelar</button>
+      <button class="btn-del-confirm" onclick="confirmarEliminar()">Sí, eliminar</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -236,12 +344,15 @@
   let TOKEN = '';
   let TIPO_SELECCIONADO = 'entrada';
   let REGISTROS_CACHE = [];
+  let ADMIN_CACHE = [];
+  let qrScanner = null;
+  let qrActivo  = false;
 
   document.addEventListener('keydown', e => {
     if (e.key === 'Enter' && document.getElementById('s-login').classList.contains('active')) doLogin();
   });
 
-  // ── AUTH ──
+  // ── AUTH ──────────────────────────────────────────────────────────────────
   async function doLogin() {
     const user = document.getElementById('l-user').value.trim();
     const pass = document.getElementById('l-pass').value;
@@ -265,35 +376,39 @@
     document.getElementById('user-chip').textContent = '👤 ' + username;
     document.getElementById('d-greeting').textContent = 'Bienvenido, ' + username;
     document.getElementById('d-fecha').textContent = new Date().toLocaleDateString('es-GT', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    const hoy = new Date().toISOString().slice(0,10);
+    document.getElementById('sol-fecha').value = hoy;
+    document.getElementById('adm-fecha').value = hoy;
     tickReloj();
     setInterval(tickReloj, 1000);
     cargarStats();
     setInterval(cargarStats, 30000);
-    const hoy = new Date().toISOString().slice(0,10);
-    document.getElementById('sol-fecha').value = hoy;
   }
 
   function doLogout() {
     TOKEN = '';
+    detenerQR();
     document.getElementById('s-sistema').classList.remove('active');
     document.getElementById('s-login').classList.add('active');
     document.getElementById('l-user').value = '';
     document.getElementById('l-pass').value = '';
   }
 
-  // ── NAVEGACIÓN ──
+  // ── NAVEGACIÓN ─────────────────────────────────────────────────────────────
+  const PAGINAS = ['inicio','registrar','solicitudes','reportes','administrar','qr'];
   function irA(pagina) {
+    detenerQR();
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-    const mapa = { inicio:'p-inicio', registrar:'p-registrar', solicitudes:'p-solicitudes', reportes:'p-reportes' };
-    document.getElementById(mapa[pagina]).classList.add('active');
-    document.querySelectorAll('.nav-tab')[['inicio','registrar','solicitudes','reportes'].indexOf(pagina)].classList.add('active');
+    document.getElementById('p-' + pagina).classList.add('active');
+    document.querySelectorAll('.nav-tab')[PAGINAS.indexOf(pagina)].classList.add('active');
     if (pagina === 'solicitudes') cargarTabla('solicitudes');
     if (pagina === 'reportes')    cargarTabla('reportes');
+    if (pagina === 'administrar') cargarAdmin();
     if (pagina === 'registrar')   limpiarFormulario();
   }
 
-  // ── STATS ──
+  // ── STATS ──────────────────────────────────────────────────────────────────
   async function cargarStats() {
     try {
       const res  = await fetch(`${API}/registros/stats?token=${TOKEN}`);
@@ -305,7 +420,82 @@
     } catch(e) {}
   }
 
-  // ── REGISTRAR ──
+  // ── QR ─────────────────────────────────────────────────────────────────────
+  function toggleQR() {
+    qrActivo ? detenerQR() : iniciarQR();
+  }
+
+  function iniciarQR() {
+    const reader = document.getElementById('qr-reader');
+    reader.style.display = 'block';
+    document.getElementById('qr-toggle-btn').textContent = '⏹ Detener cámara';
+    document.getElementById('qr-resultado').style.display = 'none';
+
+    qrScanner = new Html5Qrcode("qr-reader");
+    qrScanner.start(
+      { facingMode: "environment" },
+    { fps: 15, qrbox: 250 },
+      (texto) => {
+        // Primero llenamos los campos, luego detenemos la cámara
+        procesarQR(texto);
+        setTimeout(() => detenerQR(), 300);
+      },
+      (error) => {
+         console.log("QR Error:", error);
+      }
+    ).catch(err => {
+      mostrarErr('r-err', 'No se pudo acceder a la cámara: ' + err);
+      detenerQR();
+    });
+    qrActivo = true;
+  }
+
+  function detenerQR() {
+    if (qrScanner && qrActivo) {
+      qrScanner.stop().catch(() => {});
+      qrScanner = null;
+    }
+    qrActivo = false;
+    const reader = document.getElementById('qr-reader');
+    if (reader) { reader.style.display = 'none'; reader.innerHTML = ''; }
+    const btn = document.getElementById('qr-toggle-btn');
+    if (btn) btn.textContent = '📷 Escanear QR para autocompletar';
+  }
+
+  function procesarQR(texto) {
+    // Soporta dos formatos:
+    // 1. PLACA|CONDUCTOR|MOTIVO  (QR generado por esta app)
+    // 2. URL de Google Forms con entry.XXXXXX (QR legado)
+    let placa = '', conductor = '', motivo = '';
+
+    if (texto.includes('docs.google.com/forms')) {
+      try {
+        const params = new URL(texto).searchParams;
+        // Busca cualquier entry.* en orden de aparición
+        const entries = [...params.entries()].filter(([k]) => k.startsWith('entry.'));
+        placa     = (entries[0]?.[1] || '').toUpperCase().trim();
+        conductor = (entries[1]?.[1] || '').trim();
+        motivo    = (entries[2]?.[1] || '').trim();
+      } catch(_) { placa = texto.trim().toUpperCase(); }
+    } else {
+      const partes = texto.trim().split('|');
+      placa     = (partes[0] || '').toUpperCase().trim();
+      conductor = (partes[1] || '').trim();
+      motivo    = (partes[2] || '').trim();
+    }
+
+    if (placa)     document.getElementById('r-placa').value     = placa;
+    if (conductor) document.getElementById('r-conductor').value = conductor;
+    if (motivo)    document.getElementById('r-motivo').value    = motivo;
+
+    const res = document.getElementById('qr-resultado');
+    res.style.display = 'block';
+    res.textContent   = '✓ QR leído: ' + texto;
+
+    console.log("QR leído:", texto);
+  }
+
+  // ── REGISTRAR ──────────────────────────────────────────────────────────────
   function setTipo(tipo) {
     TIPO_SELECCIONADO = tipo;
     document.getElementById('btn-entrada').classList.toggle('active', tipo === 'entrada');
@@ -338,20 +528,19 @@
     document.getElementById('r-placa').value     = '';
     document.getElementById('r-conductor').value = '';
     document.getElementById('r-motivo').value    = '';
+    document.getElementById('qr-resultado').style.display = 'none';
     setTipo('entrada');
   }
 
-  // ── TABLAS ──
+  // ── TABLAS ─────────────────────────────────────────────────────────────────
   async function cargarTabla(cual) {
-    const isRep = cual === 'reportes';
-    const loadId  = isRep ? 'rep-loading' : 'sol-loading';
-    const emptyId = isRep ? 'rep-empty'   : 'sol-empty';
+    const isRep   = cual === 'reportes';
+    const loadId  = isRep ? 'rep-loading'    : 'sol-loading';
+    const emptyId = isRep ? 'rep-empty'      : 'sol-empty';
     const bodyId  = isRep ? 'tabla-rep-body' : 'tabla-sol-body';
-
     document.getElementById(loadId).style.display  = 'block';
     document.getElementById(emptyId).style.display = 'none';
     document.getElementById(bodyId).innerHTML = '';
-
     try {
       let url = `${API}/registros?token=${TOKEN}`;
       if (!isRep) {
@@ -362,55 +551,134 @@
       const data = await res.json();
       REGISTROS_CACHE = data;
       renderTabla(cual, data);
-    } catch(e) {
-      document.getElementById(loadId).style.display = 'none';
-    }
+    } catch(e) { document.getElementById(loadId).style.display = 'none'; }
   }
 
   function renderTabla(cual, rows) {
-    const isRep  = cual === 'reportes';
+    const isRep   = cual === 'reportes';
     const loadId  = isRep ? 'rep-loading'    : 'sol-loading';
     const emptyId = isRep ? 'rep-empty'      : 'sol-empty';
     const bodyId  = isRep ? 'tabla-rep-body' : 'tabla-sol-body';
-
     document.getElementById(loadId).style.display = 'none';
-
-    if (!rows.length) {
-      document.getElementById(emptyId).style.display = 'block';
-      return;
-    }
-
-    document.getElementById(bodyId).innerHTML = rows.map((r, i) => `
+    if (!rows.length) { document.getElementById(emptyId).style.display = 'block'; return; }
+    document.getElementById(bodyId).innerHTML = rows.map(r => `
       <tr>
         <td style="color:#555">${r.id}</td>
         <td>${r.fecha}</td>
         <td style="font-weight:600;color:#fff">${r.placa}</td>
         <td><span class="pill ${r.tipo}">${r.tipo}</span></td>
         <td>${r.conductor}</td>
-        <td style="color:#888;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.motivo}</td>
+        <td style="color:#888;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.motivo}</td>
         <td style="color:#666">${r.usuario}</td>
       </tr>`).join('');
   }
 
   function filtrarTabla() {
     const q = document.getElementById('sol-buscar').value.toLowerCase();
-    const filtrado = REGISTROS_CACHE.filter(r =>
-      r.placa.toLowerCase().includes(q) || r.conductor.toLowerCase().includes(q)
-    );
-    renderTabla('solicitudes', filtrado);
+    renderTabla('solicitudes', REGISTROS_CACHE.filter(r =>
+      r.placa.toLowerCase().includes(q) || r.conductor.toLowerCase().includes(q)));
   }
 
   function exportarCSV() {
     if (!REGISTROS_CACHE.length) { alert('No hay datos para exportar.'); return; }
-    const cab  = 'ID,Fecha,Placa,Tipo,Conductor,Motivo,Usuario\n';
+    const cab   = 'ID,Fecha,Placa,Tipo,Conductor,Motivo,Usuario\n';
     const filas = REGISTROS_CACHE.map(r =>
-      `${r.id},"${r.fecha}","${r.placa}","${r.tipo}","${r.conductor}","${r.motivo}","${r.usuario}"`
-    ).join('\n');
+      `${r.id},"${r.fecha}","${r.placa}","${r.tipo}","${r.conductor}","${r.motivo}","${r.usuario}"`).join('\n');
     const blob = new Blob([cab + filas], { type: 'text/csv;charset=utf-8;' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href = url; a.download = `garita_${new Date().toISOString().slice(0,10)}.csv`;
-    a.click(); URL.revokeObjectURL(url);
+    const a    = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `garita_${new Date().toISOString().slice(0,10)}.csv` });
+    a.click(); URL.revokeObjectURL(a.href);
+  }
+
+  // ── ADMINISTRAR ────────────────────────────────────────────────────────────
+  async function cargarAdmin() {
+    document.getElementById('adm-loading').style.display  = 'block';
+    document.getElementById('adm-empty').style.display    = 'none';
+    document.getElementById('tabla-adm-body').innerHTML   = '';
+    try {
+      let url = `${API}/registros?token=${TOKEN}`;
+      const f = document.getElementById('adm-fecha').value;
+      if (f) url += `&fecha=${f}`;
+      const res  = await fetch(url);
+      ADMIN_CACHE = await res.json();
+      renderAdmin(ADMIN_CACHE);
+    } catch(e) { document.getElementById('adm-loading').style.display = 'none'; }
+  }
+
+  function renderAdmin(rows) {
+    document.getElementById('adm-loading').style.display = 'none';
+    if (!rows.length) { document.getElementById('adm-empty').style.display = 'block'; return; }
+    document.getElementById('tabla-adm-body').innerHTML = rows.map(r => `
+      <tr>
+        <td style="color:#555">${r.id}</td>
+        <td>${r.fecha}</td>
+        <td style="font-weight:600;color:#fff">${r.placa}</td>
+        <td><span class="pill ${r.tipo}">${r.tipo}</span></td>
+        <td>${r.conductor}</td>
+        <td style="color:#888;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.motivo}</td>
+        <td>
+          <button class="btn-edit" onclick='abrirEditar(${JSON.stringify(r)})'>✏️ Editar</button>
+          <button class="btn-del"  onclick='abrirEliminar(${r.id}, "${r.placa}", "${r.conductor}")'>🗑️ Eliminar</button>
+        </td>
+      </tr>`).join('');
+  }
+
+  function filtrarAdmin() {
+    const q = document.getElementById('adm-buscar').value.toLowerCase();
+    renderAdmin(ADMIN_CACHE.filter(r =>
+      r.placa.toLowerCase().includes(q) || r.conductor.toLowerCase().includes(q)));
+  }
+
+  // ── MODAL EDITAR ───────────────────────────────────────────────────────────
+  function abrirEditar(r) {
+    document.getElementById('edit-id').value        = r.id;
+    document.getElementById('edit-tipo').value      = r.tipo;
+    document.getElementById('edit-placa').value     = r.placa;
+    document.getElementById('edit-conductor').value = r.conductor;
+    document.getElementById('edit-motivo').value    = r.motivo;
+    document.getElementById('edit-err').classList.remove('show');
+    document.getElementById('modal-editar').classList.add('show');
+  }
+
+  async function guardarEdicion() {
+    const id        = document.getElementById('edit-id').value;
+    const tipo      = document.getElementById('edit-tipo').value;
+    const placa     = document.getElementById('edit-placa').value.trim().toUpperCase();
+    const conductor = document.getElementById('edit-conductor').value.trim();
+    const motivo    = document.getElementById('edit-motivo').value.trim();
+    if (!placa || !conductor || !motivo) { mostrarErr('edit-err', 'Completa todos los campos'); return; }
+    try {
+      const res  = await fetch(`${API}/registros/${id}`, { method:'PUT', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ placa, tipo, conductor, motivo, token: TOKEN }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Error al actualizar');
+      cerrarModal('modal-editar');
+      cargarAdmin();
+      cargarStats();
+    } catch(e) { mostrarErr('edit-err', e.message); }
+  }
+
+  // ── MODAL ELIMINAR ─────────────────────────────────────────────────────────
+  function abrirEliminar(id, placa, conductor) {
+    document.getElementById('del-id').value   = id;
+    document.getElementById('del-info').textContent = `Placa: ${placa} — Conductor: ${conductor}`;
+    document.getElementById('modal-eliminar').classList.add('show');
+  }
+
+  async function confirmarEliminar() {
+    const id = document.getElementById('del-id').value;
+    try {
+      const res  = await fetch(`${API}/registros/${id}?token=${TOKEN}`, { method:'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Error al eliminar');
+      cerrarModal('modal-eliminar');
+      cargarAdmin();
+      cargarStats();
+    } catch(e) { alert('Error: ' + e.message); }
+  }
+
+  // ── UTILIDADES ─────────────────────────────────────────────────────────────
+  function cerrarModal(id) {
+    document.getElementById(id).classList.remove('show');
   }
 
   function mostrarErr(id, msg) {
@@ -423,6 +691,85 @@
     document.getElementById('reloj').textContent =
       new Date().toLocaleTimeString('es-GT', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
   }
+
+  // Cerrar modales al hacer clic fuera
+  document.addEventListener('click', e => {
+    if (e.target.classList.contains('modal-overlay')) {
+      e.target.classList.remove('show');
+    }
+  });
+
+  // ── GENERAR QR ──────────────────────────────────────────────────────────────
+let qrGenerado = null;
+
+function actualizarQR() {
+  const placa     = document.getElementById('qg-placa').value.trim().toUpperCase();
+  const conductor = document.getElementById('qg-conductor').value.trim();
+  const motivo    = document.getElementById('qg-motivo').value.trim();
+  if (!placa) {
+    document.getElementById('qg-preview').style.display = 'none';
+    document.getElementById('qg-empty').style.display   = 'block';
+    return;
+  }
+
+  const texto = [placa, conductor, motivo].join('|');
+
+  document.getElementById('qg-preview').style.display = 'block';
+  document.getElementById('qg-empty').style.display   = 'none';
+  document.getElementById('qg-texto').textContent     = `${placa}${conductor ? ' · ' + conductor : ''}${motivo ? ' · ' + motivo : ''}`;
+
+  const canvas = document.getElementById('qg-canvas');
+  canvas.innerHTML = '';
+
+  const cvs = document.createElement('canvas');
+  canvas.appendChild(cvs);
+
+  QRCode.toCanvas(cvs, texto, {
+    width: 256,
+    margin: 2,
+    errorCorrectionLevel: 'L',
+    color: { dark: '#000000', light: '#ffffff' }
+  }, (err) => {
+    if (err) console.error('Error generando QR:', err);
+  });
+}
+
+function descargarQR() {
+  const cvs = document.querySelector('#qg-canvas canvas');
+  if (!cvs) return;
+  const a = document.createElement('a');
+  a.href     = cvs.toDataURL('image/png');
+  a.download = 'qr-' + (document.getElementById('qg-placa').value || 'vehiculo') + '.png';
+  a.click();
+}
+
+function imprimirQR() {
+  const placa     = document.getElementById('qg-placa').value.trim().toUpperCase();
+  const conductor = document.getElementById('qg-conductor').value.trim();
+  const motivo    = document.getElementById('qg-motivo').value.trim();
+  const cvs       = document.querySelector('#qg-canvas canvas');
+  if (!cvs) return;
+  const imgSrc = cvs.toDataURL('image/png');
+  const win = window.open('', '_blank');
+  win.document.write(`
+    <html><head><title>QR Garita</title>
+    <style>
+      body { font-family: Arial, sans-serif; text-align: center; padding: 40px; }
+      h2 { font-size: 18px; margin-bottom: 4px; }
+      p  { font-size: 13px; color: #666; margin: 4px 0; }
+      img { margin: 20px 0; }
+      .label { font-size: 11px; text-transform: uppercase; color: #999; letter-spacing: .06em; }
+    </style></head>
+    <body onload="window.print()">
+      <h2>Control de Garita</h2>
+      <img src="${imgSrc}" width="200"/>
+      <br>
+      <span class="label">Placa</span><br><strong>${placa}</strong><br>
+      ${conductor ? `<span class="label">Conductor</span><br><p>${conductor}</p>` : ''}
+      ${motivo    ? `<span class="label">Motivo</span><br><p>${motivo}</p>`    : ''}
+    </body></html>`);
+  win.document.close();
+}
 </script>
 </body>
 </html>

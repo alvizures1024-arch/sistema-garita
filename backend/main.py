@@ -83,6 +83,13 @@ class RegistroRequest(BaseModel):
     motivo:    str
     token:     str
 
+class RegistroUpdateRequest(BaseModel):
+    placa:     str
+    tipo:      str
+    conductor: str
+    motivo:    str
+    token:     str
+
 app = FastAPI(title="Sistema de Garita")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
@@ -139,7 +146,7 @@ def listar_registros(token: str, fecha: Optional[str] = None, db: Session = Depe
         try:
             dia = datetime.strptime(fecha, "%Y-%m-%d")
             q   = q.filter(Registro.fecha >= dia,
-                           Registro.fecha < dia.replace(hour=23, minute=59, second=59))
+                           Registro.fecha < dia + timedelta(days=1))
         except ValueError:
             raise HTTPException(400, "Formato de fecha inválido, usa YYYY-MM-DD")
     registros = q.order_by(Registro.fecha.desc()).all()
@@ -164,3 +171,27 @@ def stats_hoy(token: str, db: Session = Depends(get_db)):
     salidas  = db.query(Registro).filter(Registro.fecha >= hoy, Registro.tipo == "salida").count()
     total    = db.query(Registro).filter(Registro.fecha >= hoy).count()
     return {"entradas": entradas, "salidas": salidas, "total": total}
+
+@app.put("/registros/{id}")
+def actualizar_registro(id: int, req: RegistroUpdateRequest, db: Session = Depends(get_db)):
+    obtener_usuario(req.token, db)
+    r = db.query(Registro).filter(Registro.id == id).first()
+    if not r:
+        raise HTTPException(404, "Registro no encontrado")
+    r.placa     = req.placa.upper().strip()
+    r.tipo      = req.tipo
+    r.conductor = req.conductor.strip()
+    r.motivo    = req.motivo.strip()
+    db.commit()
+    db.refresh(r)
+    return {"id": r.id, "message": "Registro actualizado"}
+
+@app.delete("/registros/{id}")
+def eliminar_registro(id: int, token: str, db: Session = Depends(get_db)):
+    obtener_usuario(token, db)
+    r = db.query(Registro).filter(Registro.id == id).first()
+    if not r:
+        raise HTTPException(404, "Registro no encontrado")
+    db.delete(r)
+    db.commit()
+    return {"message": "Registro eliminado"}
